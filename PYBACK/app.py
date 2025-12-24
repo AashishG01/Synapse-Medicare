@@ -211,7 +211,6 @@ async def analyze_medical_report(file: UploadFile = File(...)):
         
         image = Image.open(io.BytesIO(await file.read()))
         
-        
         extracted_text = pytesseract.image_to_string(image)
         
         if not extracted_text.strip():
