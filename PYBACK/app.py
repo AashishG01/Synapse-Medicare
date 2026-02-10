@@ -205,11 +205,19 @@ async def generate_diet_plan(request: DietPlanRequest):
 
 
 
-@app.post("/analyze-report")
-async def analyze_medical_report(file: UploadFile = File(...)):
+
+class AnalyzeReportRequest(BaseModel):
+    fileUrl: str
+
+@app.post("/analyze")
+async def analyze_medical_report(request: AnalyzeReportRequest):
     try:
+        # Download image from Cloudinary URL
+        response = requests.get(request.fileUrl)
+        if response.status_code != 200:
+             raise HTTPException(status_code=400, detail="Failed to download image from URL")
         
-        image = Image.open(io.BytesIO(await file.read()))
+        image = Image.open(io.BytesIO(response.content))
         
         extracted_text = pytesseract.image_to_string(image)
         

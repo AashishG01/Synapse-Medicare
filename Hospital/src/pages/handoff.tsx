@@ -34,7 +34,7 @@ interface CurrentUser {
 }
 
 export default function Handoff() {
-  
+
   const [handoffs, setHandoffs] = useState<HandoffNote[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -46,16 +46,16 @@ export default function Handoff() {
   const [summary, setSummary] = useState("");
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
-  
+
   useEffect(() => {
-    
+
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    
+
     const handoffsQuery = query(
       collection(db, "handoffs"),
       where("timestamp", ">=", startOfDay),
@@ -63,17 +63,17 @@ export default function Handoff() {
       orderBy("timestamp", "desc")
     );
 
-    
+
     const unsubscribeHandoffs = onSnapshot(handoffsQuery, (querySnapshot) => {
       const fetchedHandoffs = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        timestamp: doc.data().timestamp.toDate(), 
+        timestamp: doc.data().timestamp.toDate(),
       })) as HandoffNote[];
       setHandoffs(fetchedHandoffs);
     });
 
-    
+
     const attendanceQuery = query(
       collection(db, "attendance"),
       where("timestamp", ">=", startOfDay),
@@ -81,7 +81,7 @@ export default function Handoff() {
       orderBy("timestamp", "desc")
     );
 
-    
+
     const unsubscribeAttendance = onSnapshot(attendanceQuery, (querySnapshot) => {
       const fetchedAttendance = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -92,12 +92,12 @@ export default function Handoff() {
     });
 
 
-    
+
     return () => {
       unsubscribeHandoffs();
       unsubscribeAttendance();
     };
-  }, []); 
+  }, []);
 
 
   const lastAttendanceStatus = useMemo(() => {
@@ -109,7 +109,7 @@ export default function Handoff() {
     return "Clocked Out";
   }, [attendance, currentUser]);
 
-  
+
   const handleClockInOut = async () => {
     if (currentUser && lastAttendanceStatus === "Clocked In") {
       try {
@@ -123,7 +123,7 @@ export default function Handoff() {
           title: "Success",
           description: `${currentUser.name} has been Clocked Out.`,
         });
-        setCurrentUser(null); 
+        setCurrentUser(null);
       } catch (error) {
         console.error("Error clocking out:", error);
         toast({ title: "Error", description: "Failed to clock out.", variant: "destructive" });
@@ -134,7 +134,7 @@ export default function Handoff() {
     }
   };
 
-  
+
   const handleConfirmClockIn = async () => {
     if (!inputNurseName.trim()) {
       toast({ title: "Error", description: "Nurse name cannot be empty.", variant: "destructive" });
@@ -148,7 +148,7 @@ export default function Handoff() {
         status: "Clocked In",
         timestamp: new Date(),
       });
-      setCurrentUser(newUser); 
+      setCurrentUser(newUser);
       toast({ title: "Success", description: `${newUser.name} has been Clocked In.` });
       setIsClockInDialogOpen(false);
     } catch (error) {
@@ -157,7 +157,7 @@ export default function Handoff() {
     }
   };
 
-  
+
   const handleSaveHandoff = async () => {
     if (!currentUser) {
       toast({ title: "Error", description: "You must be clocked in to add a note.", variant: "destructive" });
@@ -172,7 +172,7 @@ export default function Handoff() {
         nurseId: currentUser.id,
         nurseName: currentUser.name,
         report: newHandoffNote,
-        timestamp: new Date(), 
+        timestamp: new Date(),
       });
       toast({ title: "Handoff Saved", description: "Your report has been successfully submitted." });
       setIsHandoffDialogOpen(false);
@@ -184,41 +184,41 @@ export default function Handoff() {
   };
 
   const handleGenerateSummary = async () => {
-    
-    
+
+
     setSummary("");
     setIsSummaryDialogOpen(true);
     setIsLoadingSummary(true);
 
     if (handoffs.length === 0) {
-        setSummary("No handoff reports available for today to summarize.");
-        setIsLoadingSummary(false);
-        return;
+      setSummary("No handoff reports available for today to summarize.");
+      setIsLoadingSummary(false);
+      return;
     }
 
     const reportsToSummarize = handoffs.map(note => note.report);
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/smart-handoff-summary', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reports: reportsToSummarize }),
-        });
+      const response = await fetch('http://localhost:5000/api/v1/hospitals/handoff-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reports: reportsToSummarize }),
+      });
 
-        if (!response.ok) throw new Error('Failed to generate summary from API');
-        const data = await response.json();
-        setSummary(data.summary);
+      if (!response.ok) throw new Error('Failed to generate summary from API');
+      const data = await response.json();
+      setSummary(data.summary);
     } catch (error) {
-        console.error("Error generating summary:", error);
-        setSummary("Failed to generate summary. Please try again.");
+      console.error("Error generating summary:", error);
+      setSummary("Failed to generate summary. Please try again.");
     } finally {
-        setIsLoadingSummary(false);
+      setIsLoadingSummary(false);
     }
   };
-  
-  
+
+
   const formatSummary = (text: string) => {
-    
+
     if (!text) return "";
     let html = text;
     html = html.replace(/^##\s*(.*)$/gm, '<h3>$1</h3>');
@@ -231,9 +231,9 @@ export default function Handoff() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 max-w-6xl bg-gray-50 dark:bg-gray-900 font-sans">
-        {/* The entire JSX for your component remains unchanged */}
-        {/* ... (all your existing JSX code from <style> to </div>) ... */}
-         <style>{`
+      {/* The entire JSX for your component remains unchanged */}
+      {/* ... (all your existing JSX code from <style> to </div>) ... */}
+      <style>{`
         body { font-family: 'Inter', sans-serif; }
         .card-shadow { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         .btn-primary { background-color: #3b82f6; color: white; }
@@ -264,11 +264,10 @@ export default function Handoff() {
               <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
                 <span className="font-medium">Current Status:</span>
                 <span
-                  className={`status-badge ${
-                    lastAttendanceStatus === "Clocked In"
+                  className={`status-badge ${lastAttendanceStatus === "Clocked In"
                       ? "bg-green-500"
                       : "bg-gray-500"
-                  }`}
+                    }`}
                 >
                   {lastAttendanceStatus}
                 </span>
@@ -296,7 +295,7 @@ export default function Handoff() {
               {attendance.length > 0 ? (
                 <ul className="space-y-2 text-sm">
                   {attendance
-                    .slice(0, 7) 
+                    .slice(0, 7)
                     .map((rec) => (
                       <li
                         key={rec.id}
@@ -364,18 +363,18 @@ export default function Handoff() {
                 <TableBody>
                   {handoffs.length > 0 ? (
                     handoffs.map((note) => (
-                        <TableRow key={note.id}>
-                          <TableCell className="font-medium">
-                            {note.nurseName}
-                          </TableCell>
-                          <TableCell>
-                            {note.timestamp.toLocaleString()}
-                          </TableCell>
-                          <TableCell className="whitespace-pre-wrap max-w-sm truncate">
-                            {note.report}
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      <TableRow key={note.id}>
+                        <TableCell className="font-medium">
+                          {note.nurseName}
+                        </TableCell>
+                        <TableCell>
+                          {note.timestamp.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="whitespace-pre-wrap max-w-sm truncate">
+                          {note.report}
+                        </TableCell>
+                      </TableRow>
+                    ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center py-8">

@@ -1,7 +1,5 @@
 
-import { collection, addDoc } from "firebase/firestore";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,25 +20,22 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
-import { db } from "@/config/firebase";
 
 interface Appointment {
-  id: string;
   patientName: string;
   phone: string;
-  doctorName: string;
+  doctorId: string; // Changed to ID
   date: Date;
   time: string;
   type: string;
-  status: string;
   notes?: string;
 }
 
-const doctors = [
-  { id: "1", name: "Dr. Rajeev Mehta", specialty: "General Medicine" },
-  { id: "2", name: "Dr. Priyanka Iyer", specialty: "Orthopedics" },
-  { id: "3", name: "Dr. Vikas Menon", specialty: "Surgery" },
-];
+interface Doctor {
+  _id: string;
+  name: string;
+  specialization: string;
+}
 
 const timeSlots = [
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -50,56 +45,63 @@ const timeSlots = [
 export default function AppointmentForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<Date>();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [newAppointment, setNewAppointment] = useState<Partial<Appointment>>({
     type: "checkup",
-    status: "scheduled",
   });
 
-const handleCreateAppointment = async () => {
-  const { patientName, phone, doctorName, time } = newAppointment;
+  // Fetch doctors from backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/v1/doctors")
+      .then((res) => res.json())
+      .then((data) => setDoctors(data))
+      .catch((err) => console.error("Failed to load doctors:", err));
+  }, []);
 
-  if (patientName && phone && doctorName && date && time) {
-    const appointment = {
-      patientName,
-      phone,
-      doctorName,
-      date: date.toISOString(), 
-      time,
-      type: "checkup",
-      status: "scheduled",
-      notes: newAppointment.notes || "",
-      createdAt: new Date().toISOString(),
-    };
+  const handleCreateAppointment = async () => {
+    const { patientName, phone, doctorId, time } = newAppointment;
 
-    try {
-      await addDoc(collection(db, "appointments"), appointment); 
-      console.log("Appointment saved to Firebase:", appointment);
-      alert("Appointment successfully scheduled!");
-const formattedDate = format(date, "PPP");
-      const message = `Hello ${patientName}, your appointment with ${doctorName} is scheduled on ${formattedDate} at ${time}.`;
+    if (patientName && phone && doctorId && date && time) {
+      const appointmentData = {
+        patientName,
+        phone,
+        doctorId,
+        date: date.toISOString(),
+        time,
+        notes: newAppointment.notes || "",
+        type: "checkup",
+      };
 
-      await fetch("https://twilio-back.onrender.com/send-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: `+91${phone}`,
-          message,
-        }),
-      });
+      try {
+        const response = await fetch("http://localhost:5000/api/v1/appointments", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // "Authorization": `Bearer ${localStorage.getItem('token')}` // Add if using auth
+          },
+          body: JSON.stringify(appointmentData)
+        });
 
-      setIsOpen(false);
-      setNewAppointment({});
-      setDate(undefined);
-    } catch (error) {
-      console.error("Error saving appointment:", error);
-      alert("Error scheduling appointment. Please try again.");
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log("Appointment saved:", data);
+          alert("Appointment successfully scheduled!");
+          setIsOpen(false);
+          setNewAppointment({ type: "checkup" });
+          setDate(undefined);
+        } else {
+          alert(`Error: ${data.message || "Failed to schedule"}`);
+        }
+
+      } catch (error) {
+        console.error("Error saving appointment:", error);
+        alert("Error scheduling appointment. Please try again.");
+      }
+    } else {
+      alert("Please fill in all the required fields.");
     }
-  } else {
-    alert("Please fill in all the required fields.");
-  }
-};
+  };
 
   return (
     <>
@@ -136,9 +138,9 @@ const formattedDate = format(date, "PPP");
             />
 
             <Select
-              value={newAppointment.doctorName}
+              value={newAppointment.doctorId}
               onValueChange={(value) =>
-                setNewAppointment({ ...newAppointment, doctorName: value })
+                setNewAppointment({ ...newAppointment, doctorId: value })
               }
             >
               <SelectTrigger>
@@ -146,8 +148,8 @@ const formattedDate = format(date, "PPP");
               </SelectTrigger>
               <SelectContent>
                 {doctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.name}>
-                    {doctor.name} - {doctor.specialty}
+                  <SelectItem key={doctor._id} value={doctor._id}>
+                    {doctor.name} - {doctor.specialization}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -1,36 +1,50 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const AppointmentSchema = new mongoose.Schema({
-  patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+const appointmentSchema = new mongoose.Schema(
+  {
+    patientName: {
+      type: String,
+      required: true,
+    },
+    phone: {
+      type: String,
+      required: true,
+    },
+    doctor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor",
+      required: true,
+    },
+    date: {
+      type: Date,
+      required: true,
+    },
+    time: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      default: "checkup",
+    },
+    status: {
+      type: String,
+      enum: ["scheduled", "completed", "cancelled"],
+      default: "scheduled",
+    },
+    notes: {
+      type: String,
+    },
+    // Optional: Link to a registered user if they are logged in
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    }
   },
-  doctor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Doctor',
-    required: true,
-  },
-  hospital: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // The hospital where the appointment is booked
-    required: true,
-  },
-  appointmentTime: {
-    type: Date,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ['Scheduled', 'Completed', 'Cancelled', 'Pending'],
-    default: 'Scheduled',
-  },
-  notes: {
-    type: String, // Any notes patient wants to add
-  },
-}, {
-  timestamps: true
-});
+  { timestamps: true }
+);
 
-const Appointment = mongoose.model('Appointment', AppointmentSchema);
+const Appointment = mongoose.model("Appointment", appointmentSchema);
+
 export default Appointment;

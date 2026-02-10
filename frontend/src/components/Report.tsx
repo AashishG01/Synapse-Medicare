@@ -31,10 +31,10 @@ export default function MedicalReport() {
         setAnalysisData(null);
 
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("report", file); // Matched with Multer config
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/analyze-report", {
+            const response = await fetch("http://localhost:5000/api/v1/reports/analyze", {
                 method: "POST",
                 body: formData,
             });
@@ -73,7 +73,7 @@ export default function MedicalReport() {
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                    
+
                     <div className="flex flex-col items-center gap-4">
                         <Input
                             type="file"
@@ -91,17 +91,17 @@ export default function MedicalReport() {
                         </Button>
                     </div>
 
-                    
+
                     {error && (
                         <div className="p-3 bg-red-100 text-red-600 rounded-md flex items-center gap-2">
                             <AlertCircle className="w-5 h-5" /> {error}
                         </div>
                     )}
 
-                    
+
                     {analysisData && (
                         <div className="space-y-6">
-                            
+
                             {analysisData.extracted_text && (
                                 <Card>
                                     <CardHeader>
@@ -136,7 +136,7 @@ export default function MedicalReport() {
                                 </Card>
                             )}
 
-                            
+
                             {analysisData?.medical_insights?.key_terms?.length > 0 && (
                                 <Card>
                                     <CardHeader>
@@ -152,7 +152,7 @@ export default function MedicalReport() {
                                 </Card>
                             )}
 
-                            
+
                             {Array.isArray(analysisData?.medical_insights?.possible_conditions) && (
                                 <Card>
                                     <CardHeader>
@@ -176,7 +176,7 @@ export default function MedicalReport() {
                                 </Card>
                             )}
 
-                            
+
                             {Array.isArray(analysisData?.medical_insights?.advice) && (
                                 <Card>
                                     <CardHeader>

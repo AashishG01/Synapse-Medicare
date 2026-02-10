@@ -17,12 +17,15 @@ import HealthInsurance from './components/Insurance';
 import MedicalReport from './components/Report';
 import RecommendHealthInsurance from './components/Recommend';
 import ConsentSimplifier from './components/ConsentSimplifier';
+import Landing from '@/components/Landing';
+import Login from '@/components/Login';
+import Register from '@/components/Register';
 
 function BackButton() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  return location.pathname !== '/' ? (
+  return !['/', '/login', '/register'].includes(location.pathname) ? (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -34,7 +37,7 @@ function BackButton() {
         variant="outline"
         size="sm"
         className="flex items-center text-[18px] p-6 gap-2 shadow-md hover:shadow-lg transition-all"
-        onClick={() => navigate(-1)} 
+        onClick={() => navigate(-1)}
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Dashboard
@@ -55,7 +58,10 @@ function App() {
           <div className="w-full max-w-screen-lg px-6 py-8">
             <AnimatePresence mode="wait">
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/disease-detection" element={<DiseaseDetection />} />
                 <Route path="/chatbot" element={<Chatbot />} />
                 <Route path="/insurance" element={<HealthInsurance />} />
